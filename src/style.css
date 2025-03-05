@@ -14,6 +14,64 @@
   -webkit-text-size-adjust: 100%;
 }
 
+.contenedor-cartas {
+  margin-top: 20px;
+  width: 540px;
+  border-radius: 15px;
+  display: none;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  background-color: aquamarine;
+  padding: 20px;
+}
+
+.imagen-carta {
+  width: 100%;
+}
+#reiniciar-partida {
+  display: none;
+}
+.botones-partida {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.carta {
+  padding: 16px;
+  border-radius: 15px;
+  background-color: aqua;
+  width: 80px;
+  height: 80px;
+  cursor: pointer;
+  transition:  0.3s ease-in-out, 
+  transform 0.3s ease-in-out;
+  
+}
+.carta:hover{
+  background-color: rgb(234, 93, 234);
+}
+.animacion-voltear-carta {
+  animation: flip 0.5s ease-in-out;
+}
+
+
+.cambiar-color-fondo {
+  background-color: rgb(234, 93, 234);
+}
+/*keyframes animacion voltear la carta*/
+
+@keyframes flip {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(180deg);
+  }
+}
+
+
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -54,10 +112,6 @@ h1 {
 }
 .logo.vanilla:hover {
   filter: drop-shadow(0 0 2em #3178c6aa);
-}
-
-.card {
-  padding: 2em;
 }
 
 .read-the-docs {
