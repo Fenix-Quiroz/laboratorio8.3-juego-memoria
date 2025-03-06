@@ -1,4 +1,4 @@
-import { partida, tablero } from "./modelo";
+import { partida, Tablero, tablero } from "./modelo";
 import {
   esPartidaCompleta,
   iniciaPartida,
@@ -47,7 +47,7 @@ const animacionesAlVoltearCarta = (carta: Element): void => {
   carta.classList.add("cambiar-color-fondo");
 };
 
-const eliminarClasesDeAnimaciones = () :void => {
+const eliminarClasesDeAnimaciones = (): void => {
   const cartaA = document.querySelector(
     `.carta:nth-child(${tablero.indiceCartaVolteadaA! + 1}) `
   );
@@ -80,40 +80,44 @@ const ocultarImagenesDeParejaIncorrecta = (): void => {
   }
 };
 
-const verificacionDeParejas = (carta: Element) : void => {
-  if (
-    sonPareja(
-      tablero.indiceCartaVolteadaA!,
-      tablero.indiceCartaVolteadaB!,
-      tablero
-    )
-  ) {
-    parejaEncontrada(
-      tablero,
-      tablero.indiceCartaVolteadaA!,
-      tablero.indiceCartaVolteadaB!
-    );
-    if (esPartidaCompleta(tablero)) {
-      activarBotonReiniciarPartida();
-      mostrarMensaje("Felicidades encontraste todas las parejas");
-    }
-    resetearElEstadoPartida();
-  } else {
-    partida.intentos++;
-    setTimeout(() => {
-      parejaNoEncontrada(
-        tablero,
-        tablero.indiceCartaVolteadaA!,
-        tablero.indiceCartaVolteadaB!
-      );
-      mostrarIntentos();
-      ocultarImagenesDeParejaIncorrecta();
-      animacionesAlVoltearCarta(carta);
-      eliminarClasesDeAnimaciones();
-
-      resetearElEstadoPartida();
-    }, 1000);
+const verificacionDeParejas = (carta: Element): void => {
+  const indiceCartaA = tablero.indiceCartaVolteadaA;
+  const indiceCartaB = tablero.indiceCartaVolteadaB;
+  if (indiceCartaA !== undefined && indiceCartaB !== undefined) {
+    sonPareja(indiceCartaA, indiceCartaB, tablero)
+      ? laParejaEsEncontrada(tablero, indiceCartaA, indiceCartaB)
+      : laParejaNoEstaEncontrada(tablero, indiceCartaA, indiceCartaB, carta);
   }
+};
+
+const laParejaEsEncontrada = (
+  tablero: Tablero,
+  indiceCartaA: number,
+  indiceCartaB: number
+) => {
+  parejaEncontrada(tablero, indiceCartaA, indiceCartaB);
+  if (esPartidaCompleta(tablero)) {
+    activarBotonReiniciarPartida();
+    mostrarMensaje("Felicidades encontraste todas las parejas");
+  }
+  resetearElEstadoPartida();
+};
+
+const laParejaNoEstaEncontrada = (
+  tablero: Tablero,
+  indiceCartaA: number,
+  indiceCartaB: number,
+  carta: Element
+) => {
+  partida.intentos++;
+  setTimeout(() => {
+    parejaNoEncontrada(tablero, indiceCartaA, indiceCartaB);
+    mostrarIntentos();
+    ocultarImagenesDeParejaIncorrecta();
+    animacionesAlVoltearCarta(carta);
+    eliminarClasesDeAnimaciones();
+    resetearElEstadoPartida();
+  }, 1000);
 };
 
 export const manejarVolteoDeCarta = (
@@ -125,24 +129,11 @@ export const manejarVolteoDeCarta = (
   if (sePuedeVoltearLaCarta(tablero, indiceCarta)) {
     voltearLaCarta(tablero, indiceCarta);
     animacionesAlVoltearCarta(carta);
-    console.log(imagenCarta);
-    console.log(carta);
     imagenCarta.src = tablero.cartas[indiceImagen].imagen;
     mostrarMensaje("");
+    verificacionDeParejas(carta);
   } else {
     mostrarMensaje("Esta carta ya esta volteada.");
-    return;
-  }
-
-  if (tablero.estadoPartida === "CeroCartasLevantadas") {
-    tablero.indiceCartaVolteadaA = indiceCarta;
-    tablero.estadoPartida = "UnaCartaLevantada";
-    return;
-  }
-  if (tablero.estadoPartida === "UnaCartaLevantada") {
-    tablero.indiceCartaVolteadaB = indiceCarta;
-    tablero.estadoPartida = "DosCartasLevantadas";
-    verificacionDeParejas(carta);
   }
 };
 
@@ -167,33 +158,45 @@ const eliminarClasesAlCompletarPartida = () => {
     carta.classList.remove("animacion-voltear-carta");
   });
 };
-export const reiniciarPartida = () => {
+const ponerTodasLasCartasComoNoEncontradas = () => {
+  tablero.cartas.forEach((carta) => {
+    (carta.estaVuelta = false), (carta.encontrada = false);
+  });
+};
+const voltearTodasLasCartas = (cartas: NodeListOf<Element>) => {
+  cartas.forEach((carta) => {
+    if (carta instanceof HTMLImageElement) {
+      carta.src = "";
+    }
+  });
+};
+const gestionarSiSeVenLasCartasYIntentos = (estado: boolean) => {
   const contenedorCartas = document.getElementById("contenedor-cartas");
-  const cartas = document.querySelectorAll(".carta img");
   const divIntentos = document.getElementById("intentos");
-  eliminarClasesAlCompletarPartida();
-
-  if (
-    contenedorCartas instanceof HTMLDivElement &&
-    divIntentos instanceof HTMLDivElement &&
-    cartas
-  ) {
+  if (estado && contenedorCartas && divIntentos) {
+    contenedorCartas.style.display = "flex";
+    divIntentos.style.display = "block";
+  }
+  if (!estado && contenedorCartas && divIntentos) {
     contenedorCartas.style.display = "none";
     divIntentos.style.display = "none";
+  }
+};
+const reiniciarIntentos = () => {
+  partida.intentos = 0;
+  mostrarIntentos();
+}
+export const reiniciarPartida = () => {
+  const cartas = document.querySelectorAll(".carta img");
+  eliminarClasesAlCompletarPartida();
+  if (cartas) {
+    gestionarSiSeVenLasCartasYIntentos(false);
     iniciaPartida(tablero);
     resetearElEstadoPartida();
     mostrarMensaje("");
-    cartas.forEach((carta) => {
-      if (carta instanceof HTMLImageElement) {
-        carta.src = "";
-      }
-    });
-    tablero.cartas.forEach((carta) => {
-      (carta.estaVuelta = false), (carta.encontrada = false);
-    });
-    contenedorCartas.style.display = "flex";
-    divIntentos.style.display = "block";
-    partida.intentos = 0;
-    mostrarIntentos();
+    voltearTodasLasCartas(cartas);
+    ponerTodasLasCartasComoNoEncontradas();
+    gestionarSiSeVenLasCartasYIntentos(true);
+    reiniciarIntentos()
   }
 };
